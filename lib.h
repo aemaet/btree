@@ -1,32 +1,44 @@
 #include <stdio.h>
+#include <stdint.h>
 #define key_cnt 3
 #define child_cnt key_cnt+1
 #define key_len 10
 struct Pages {
-    int fd;
-    size_t pageSize;
+	int fd;
+    uint16_t pageSize;
+    size_t poolSize;
     size_t nPages;
     void *bitmask;
+    struct bit_iterator *it;
+};
+
+struct NodeHeader {
+     size_t page;
+    uint8_t flags;
+    uint32_t size;
+    size_t nextPage;
 };
 
 struct Node {
-    size_t page;
-    size_t parentPage;
-    uint32_t nKeys;
-    uint8_t flags;
-    size_t chld [chld_cnt];
-    char keys [key_cnt * key_len];
-    size_t vals [key_cnt];
+	struct NodeHeader *h;
+    size_t *chld;
+    size_t *vals;
+    char *keys;
 };
 struct DBT {
      void  *data;
      size_t size;
 };
 
-struct DBP
+struct Meta
 {
     size_t db_size;
     size_t chunk_size;
+};
+
+struct DBP
+{
+    struct Meta* meta;
     size_t mem_size;
     char* dbFile;
     size_t curr_mem;
@@ -42,7 +54,7 @@ struct DB{
     int (*put)(const struct DB *db, struct DBT *key, const struct DBT *data);
     int (*sync)(const struct DB *db);
     /* Private API */
-    DBP* DBprivate;
+    struct DBP* dbp;
 
 }; /* Need for supporting multiple backends (HASH/BTREE) */
 
